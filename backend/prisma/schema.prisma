@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(uuid())
+  username     String
+  email        String        @unique
+  password     String
+  balance      Decimal       @default(100000.00) 
+  created_at   DateTime      @default(now())
+  orders       Order[]
+  holdings     Holding[]
+  transactions Transaction[]
+}
+
+
+model Stock {
+  stock_id     Int      @id @default(autoincrement())
+  symbol       String   @unique
+  name         String
+  current_price Decimal @default(100.00)
+  type         String   @default("stock")  // <-- NEW FIELD
+  last_updated DateTime @default(now())
+  
+  orders       Order[]
+  holdings     Holding[]
+  transactions Transaction[]
+}
+
+
+model Order {
+  order_id  Int       @id @default(autoincrement())
+  user      User      @relation(fields: [user_id], references: [id])
+  user_id   String
+  stock     Stock     @relation(fields: [stock_id], references: [stock_id])
+  stock_id  Int
+  type      String
+  quantity  Decimal
+  price     Decimal
+  status    String
+  timestamp DateTime  @default(now())
+}
+
+model Holding {
+  holding_id Int     @id @default(autoincrement())
+  user       User    @relation(fields: [user_id], references: [id])
+  user_id    String
+  stock      Stock   @relation(fields: [stock_id], references: [stock_id])
+  stock_id   Int
+  quantity   Decimal
+  avg_price  Decimal
+
+  @@unique([user_id, stock_id], name: "user_stock_unique")
+}
+
+model Transaction {
+  txn_id    Int      @id @default(autoincrement())
+  user      User     @relation(fields: [user_id], references: [id])
+  user_id   String
+  stock     Stock    @relation(fields: [stock_id], references: [stock_id])
+  stock_id  Int
+  action    String
+  quantity  Decimal
+  price     Decimal
+  timestamp DateTime @default(now())
+}
